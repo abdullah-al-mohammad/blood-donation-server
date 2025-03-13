@@ -29,7 +29,17 @@ async function run() {
 
     app.post('/users', async(req,res) => {
       const user = req.body
-      const result = await userCollection.insertOne(user)
+      const newUser ={
+        ...user,
+        role: user.role || 'donor',
+        status: 'active'
+      }
+      const result = await userCollection.insertOne(newUser)
+      res.send(result)
+    })
+
+    app.get('/users', async(req, res) => {
+      const result = await userCollection.find().toArray()
       res.send(result)
     })
     // Send a ping to confirm a successful connection
