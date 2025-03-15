@@ -47,7 +47,24 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await userCollection.findOne(query)
-      console.log(result);
+      // console.log(result);
+      res.send(result)
+    })
+    app.patch('/users/:id', async(req, res) => {
+      const user = req.body
+      console.log(user);
+      
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const updateDoc= {
+        $set: {
+          name: user.name,
+          district: user.district,
+          subDistrict: user.subDistrict,
+          blood: user.bloodGroup,
+        }
+      }
+      const result =await userCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
     // Send a ping to confirm a successful connection
