@@ -25,9 +25,14 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // collections
-    const userCollection = client.db('bloodDonationDb').collection('users')
 
+
+    // collections
+    const userCollection = client.db('bloodDonationDb').collection('users') //user collections
+    const donorCollection = client.db('bloodDonationDb').collection('donations') // donor collections
+
+
+// user related apis request
     app.post('/users', async(req,res) => {
       const user = req.body
       const newUser ={
@@ -65,6 +70,13 @@ async function run() {
       }
       const result = await userCollection.updateOne(filter, updateDoc)
       res.send(result)
+    })
+    // donor related apis request
+    app.get('/donations', async(req, res) => {
+      const {donor, limit} = req.query;
+      const query = {donor: donor};
+      const donations = await donorCollection.find(query).sort(name-1).limit(parseInt(limit)).toArray()
+      res.send(donations)
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
