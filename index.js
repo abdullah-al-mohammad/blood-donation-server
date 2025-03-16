@@ -52,8 +52,6 @@ async function run() {
     })
     app.patch('/users/:id', async(req, res) => {
       const user = req.body
-      console.log(user);
-      
       const id = req.params.id
       const filter = {_id: new ObjectId(id)}
       const updateDoc= {
@@ -61,10 +59,11 @@ async function run() {
           name: user.name,
           district: user.district,
           subDistrict: user.subDistrict,
-          blood: user.bloodGroup,
+          blood: user.blood,
+          image: user.image
         }
       }
-      const result =await userCollection.updateOne(filter, updateDoc)
+      const result = await userCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
     // Send a ping to confirm a successful connection
