@@ -73,10 +73,44 @@ async function run() {
     })
     // donor related apis request
     app.get('/donations', async(req, res) => {
-      const {donor, limit} = req.query;
-      const query = {donor: donor};
-      const donations = await donorCollection.find(query).sort(name-1).limit(parseInt(limit)).toArray()
+       // Extract donor email and limit from query parameters
+      const donor = req.query?.donor; // Get the 'donor' parameter (email) from the query string
+      const limit = req.query?.limit // Get the 'limit' parameter from the query string
+
+      // If a limit is provided, parse it as an integer. Default to 3 if no limit is given
+      const parsedLimit = limit ? parseInt(limit) : 3;
+
+      // Build the query object based on the presence of a donor email
+      const query = donor ? {email: donor } : {};
+
+      // Query the database for donations using the constructed query
+    // The query is sorted by the 'createdAt' field in descending order (latest donations first)
+    // The limit ensures that no more than the specified number of donations are fetched
+      const donations = await donorCollection.find(query).sort({createdAt: -1}).limit(parsedLimit).toArray();
       res.send(donations)
+    })
+
+    app.patch('/donations/:id', async(req, res) => {
+      const id = req.params.id;
+      const status = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc ={
+        $set: {
+          status: status
+        }
+      }
+      const result = await donorCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+
+    app.post('/donations', async(req,res) => {
+      const donation = req.body;
+      const donationInfo ={
+        ...donation,
+        status: 'pending'
+      }
+      const result = await donorCollection.insertOne(donationInfo)
+      res.send(result)
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
