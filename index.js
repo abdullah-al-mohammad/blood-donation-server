@@ -33,6 +33,11 @@ async function run() {
     const donorCollection = client.db('bloodDonationDb').collection('donations') // donor collections
 
 
+    // middleware for donor 
+    const verifyDonor = async(req, res, next)=>{
+      
+    }
+
 // user related apis request
     app.post('/users', async(req,res) => {
       const user = req.body
