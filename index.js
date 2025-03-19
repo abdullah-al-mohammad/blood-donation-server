@@ -4,6 +4,7 @@ const app = express()
 const cors = require('cors')
 const port = process.env.PORT || 5000
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+var jwt = require('jsonwebtoken');
 
 // middleware
 app.use(cors())
@@ -32,7 +33,26 @@ async function run() {
     const userCollection = client.db('bloodDonationDb').collection('users') //user collections
     const donorCollection = client.db('bloodDonationDb').collection('donations') // donor collections
 
-
+    // token related api
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+      res.send({token})
+    })
+    // middleWare for token verify
+    const verifyToken = (req, res, next) => {
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "unauthorized Access" });
+      }
+      const token = req.headers.authorization.split(' ')[1]
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, () => {
+        if (err) {
+            return res.status(401).send({ message: "unauthorized access" });
+          }
+          req.decoded = decoded;
+          next();
+      })
+    }
 // user related apis request
     app.post('/users', async(req,res) => {
       const user = req.body
@@ -45,11 +65,12 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users', async(req, res) => {
+    app.get('/users', async (req, res) => {
       const result = await userCollection.find().toArray()
       res.send(result)
     })
-    app.get('/users/:id', async (req, res) => {
+    
+    app.get('/users/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await userCollection.findOne(query)
@@ -60,18 +81,32 @@ async function run() {
       const user = req.body
       const id = req.params.id
       const filter = {_id: new ObjectId(id)}
-      const updateDoc= {
-        $set: {
-          name: user.name,
-          district: user.district,
-          subDistrict: user.subDistrict,
-          blood: user.blood,
-          image: user.image,
-          status: user.status,
-          role: user.role
+      // const updateDoc= {
+      //   $set: {
+      //     name: user.name,
+      //     district: user.district,
+      //     subDistrict: user.subDistrict,
+      //     blood: user.blood,
+      //     image: user.image,
+      //     status: user.status,
+      //     role: user.role
 
-        }
-      }
+      //   }
+      // }
+
+
+      const updateDoc = { $set: {} };
+
+        // Update only the fields that are present in the request
+        if (user.name) updateDoc.$set.name = user.name;
+        if (user.district) updateDoc.$set.district = user.district;
+        if (user.subDistrict) updateDoc.$set.subDistrict = user.subDistrict;
+        if (user.blood) updateDoc.$set.blood = user.blood;
+        if (user.image) updateDoc.$set.image = user.image;
+        if (user.status) updateDoc.$set.status = user.status;
+        if (user.role) updateDoc.$set.role = user.role;
+
+
       const result = await userCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
