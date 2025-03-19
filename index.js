@@ -33,11 +33,6 @@ async function run() {
     const donorCollection = client.db('bloodDonationDb').collection('donations') // donor collections
 
 
-    // middleware for donor 
-    const verifyDonor = async(req, res, next)=>{
-      
-    }
-
 // user related apis request
     app.post('/users', async(req,res) => {
       const user = req.body
@@ -79,7 +74,6 @@ async function run() {
     })
     // donor related apis request
     app.get('/donations', async(req, res) => {
-      // const email = req.query?.email
        // Extract donor email and limit from query parameters
       const donor = req.query?.donor; // Get the 'donor' parameter (email) from the query string
       const limit = req.query?.limit // Get the 'limit' parameter from the query string
@@ -89,45 +83,32 @@ async function run() {
 
       // Build the query object based on the presence of a donor email
       const query = donor ? {email: donor } : {};
-      // const filter = {email: email}
 
       // Query the database for donations using the constructed query
     // The query is sorted by the 'createdAt' field in descending order (latest donations first)
     // The limit ensures that no more than the specified number of donations are fetched
-      const donations = parsedLimit> 0 ?  await donorCollection.find(query).sort({createdAt: -1}).limit(parsedLimit).toArray() : await donorCollection.find(donor).toArray()
+      const donations = parsedLimit > 0 ?  await donorCollection.find(query).sort({createdAt: -1}).limit(parsedLimit).toArray() : await donorCollection.find(query).toArray()
       res.send(donations)
     })
 
     app.patch('/donations/:id', async(req, res) => {
       const id = req.params.id;
-      const donation = req.body;
+      const status = req.body;
       const filter = {_id: new ObjectId(id)};
       const updateDoc ={
         $set: {
-          ...donation
+          status: status
         }
       }
       const result = await donorCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
-    app.get('/donations/:id', async(req,res)=>{
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await donorCollection.findOne(query)
-      res.send(result)
-    })
-    app.delete(`/donations/:id`, async(req, res)=>{
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await donorCollection.deleteOne(query)
-      res.send(result)
-    })
+
     app.post('/donations', async(req,res) => {
       const donation = req.body;
       const donationInfo ={
         ...donation,
-        status: 'pending',
-        createdAt: new Date()
+        status: 'pending'
       }
       const result = await donorCollection.insertOne(donationInfo)
       res.send(result)
