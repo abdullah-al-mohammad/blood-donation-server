@@ -66,7 +66,10 @@ async function run() {
           district: user.district,
           subDistrict: user.subDistrict,
           blood: user.blood,
-          image: user.image
+          image: user.image,
+          status: user.status,
+          role: user.role
+
         }
       }
       const result = await userCollection.updateOne(filter, updateDoc)
@@ -87,7 +90,11 @@ async function run() {
       // Query the database for donations using the constructed query
     // The query is sorted by the 'createdAt' field in descending order (latest donations first)
     // The limit ensures that no more than the specified number of donations are fetched
-      const donations = parsedLimit > 0 ?  await donorCollection.find(query).sort({createdAt: -1}).limit(parsedLimit).toArray() : await donorCollection.find(query).toArray()
+      const donations = await donorCollection
+            .find(query)
+            .sort({ createdAt: -1 }) // Latest first
+            .limit(parsedLimit > 0 ? parsedLimit : 0) // Apply limit if >0
+            .toArray();
       res.send(donations)
     })
 
@@ -97,7 +104,8 @@ async function run() {
       const filter = {_id: new ObjectId(id)};
       const updateDoc ={
         $set: {
-          status: status
+          status: status,
+          createdAt: new Date()
         }
       }
       const result = await donorCollection.updateOne(filter, updateDoc);
