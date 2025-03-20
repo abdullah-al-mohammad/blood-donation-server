@@ -32,6 +32,7 @@ async function run() {
     // collections
     const userCollection = client.db('bloodDonationDb').collection('users') //user collections
     const donorCollection = client.db('bloodDonationDb').collection('donations') // donor collections
+    const blogCollection = client.db('bloodDonationDb').collection('blogs') // blog collections
 
     // token related api
     app.post('/jwt', async (req, res) => {
@@ -138,7 +139,9 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
-    // donor related apis request
+
+    // ************* donor related apis request *********
+
     app.get('/donations', async(req, res) => {
        // Extract donor email and limit from query parameters
       const donor = req.query?.donor; // Get the 'donor' parameter (email) from the query string
@@ -182,6 +185,20 @@ async function run() {
         status: 'pending'
       }
       const result = await donorCollection.insertOne(donationInfo)
+      res.send(result)
+    })
+    // blog related api
+    app.get('/blogs', async(req, res) => {
+      const result = await blogCollection.find().toArray();
+      res.send(result)
+    })
+    app.post('/blogs', async(req, res) =>{
+      const blog = req.body;
+      const blogInfo ={
+        ...blog,
+        status: 'draft'
+      }
+      const result = await blogCollection.insertOne(blogInfo)
       res.send(result)
     })
     // Send a ping to confirm a successful connection
