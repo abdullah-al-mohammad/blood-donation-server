@@ -57,7 +57,7 @@ async function run() {
 
     // use verify admin after verify token
     const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded.email;
+      const email = req.decoded?.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
       const isAdmin = user?.role === "admin";
@@ -110,19 +110,6 @@ async function run() {
       const user = req.body
       const id = req.params.id
       const filter = {_id: new ObjectId(id)}
-      // const updateDoc= {
-      //   $set: {
-      //     name: user.name,
-      //     district: user.district,
-      //     subDistrict: user.subDistrict,
-      //     blood: user.blood,
-      //     image: user.image,
-      //     status: user.status,
-      //     role: user.role
-
-      //   }
-      // }
-
 
       const updateDoc = { $set: {} };
 
@@ -192,6 +179,28 @@ async function run() {
       const result = await blogCollection.find().toArray();
       res.send(result)
     })
+
+    app.patch('/blogs/:id', verifyAdmin, verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const status = req.body
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          ...status,
+          // status: status
+        }
+      }
+      const result = await blogCollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+    
+    app.delete('/blogs/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await blogCollection.deleteOne(query)
+      res.send(result)
+    })
+    
     app.post('/blogs', async(req, res) =>{
       const blog = req.body;
       const blogInfo ={
@@ -201,6 +210,7 @@ async function run() {
       const result = await blogCollection.insertOne(blogInfo)
       res.send(result)
     })
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
