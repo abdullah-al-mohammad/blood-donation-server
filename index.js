@@ -42,6 +42,7 @@ async function run() {
     })
     // middleWare for token verify
     const verifyToken = (req, res, next) => {
+      
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized Access" });
       }
@@ -51,17 +52,32 @@ async function run() {
             return res.status(401).send({ message: "unauthorized access" });
           }
         req.decoded = decoded;
+        
           next();
       })
     }
 
     // use verify admin after verify token
     const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded?.email;
+      const email = req?.decoded?.email;
+      
       const query = { email: email };
       const user = await userCollection.findOne(query);
       const isAdmin = user?.role === "admin";
       if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+    // use verify admin after verify token
+    const verifyDonor = async (req, res, next) => {
+      const email = req?.decoded?.email;
+      console.log("inside verify admin",email);
+      
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isDonor = user?.role === "donor";
+      if (!isDonor) {
         return res.status(403).send({ message: "forbidden access" });
       }
       next();
@@ -83,11 +99,10 @@ async function run() {
       const result = await userCollection.find().toArray()
       res.send(result)
     })
-
-    app.get('/users/admin/:email', verifyToken, async(req, res) => {
+// make admin
+    app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
-      console.log(email);
-      if (email !== req.decoded?.email) {
+      if (email !== req?.decoded?.email) {
          return res.status(403).send({ message: "forbidden access" });
       }
       const query = { email: email }
@@ -97,6 +112,22 @@ async function run() {
         admin = user?.role === 'admin'
       }
       res.send({admin})
+    })
+    // make donor
+    app.get('/users/donor/:email', verifyToken, async (req, res) => {
+      console.log("inside donor request",req.decoded.email);
+      
+      const email = req.params.email;
+      if (email !== req?.decoded?.email) {
+         return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      let donor = false
+      if (user) {
+        donor = user?.role === 'donor'
+      }
+      res.send({donor})
     })
 
     app.get('/users/:id', verifyToken, async (req, res) => {
@@ -175,26 +206,30 @@ async function run() {
       res.send(result)
     })
     // blog related api
-    app.get('/blogs', async(req, res) => {
+    app.get('/blogs', verifyToken,verifyAdmin, async(req, res) => {
       const result = await blogCollection.find().toArray();
       res.send(result)
     })
 
-    app.patch('/blogs/:id', verifyAdmin, verifyToken, async (req, res) => {
+    app.patch('/blogs/:id', verifyToken,verifyAdmin, async (req, res) => {
+      console.log("inside patch blog",req.headers)
       const id = req.params.id;
+      const data = req.body
       const status = req.body
       const filter = { _id: new ObjectId(id) }
       const updateDoc = {
         $set: {
-          ...status,
-          // status: status
+          ...data || {},
         }
+      }
+      if (status !== undefined) {
+        updateDoc.$set.status = status
       }
       const result = await blogCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
     
-    app.delete('/blogs/:id', async (req, res) => {
+    app.delete('/blogs/:id', verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await blogCollection.deleteOne(query)
