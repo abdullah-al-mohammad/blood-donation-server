@@ -135,6 +135,21 @@ async function run() {
       }
       res.send({donor})
     })
+    app.get('/users/volunteer/:email', verifyToken, async (req, res) => {
+      console.log("inside volunteer request",req.decoded.email);
+      
+      const email = req.params.email;
+      if (email !== req?.decoded?.email) {
+         return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      let volunteer = false
+      if (user) {
+        volunteer = user?.role === 'volunteer'
+      }
+      res.send({volunteer})
+    })
 
     app.get('/users/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
