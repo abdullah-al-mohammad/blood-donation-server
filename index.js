@@ -202,7 +202,12 @@ async function run() {
             .toArray();
       res.send(donations)
     })
-
+    app.get('/donations/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result= await donorCollection.findOne(query);
+      res.send(result)
+    })
     app.patch('/donations/:id', async(req, res) => {
       const id = req.params.id;
       const status = req.body;
@@ -229,6 +234,13 @@ async function run() {
     // blog related api
     app.get('/blogs', verifyToken,verifyAdmin, async(req, res) => {
       const result = await blogCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.get('/blogs/:id', async(req,res) => {
+      const id= req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await blogCollection.findOne(query);
       res.send(result)
     })
 
