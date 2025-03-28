@@ -72,8 +72,6 @@ async function run() {
     // use verify admin after verify token
     const verifyDonor = async (req, res, next) => {
       const email = req?.decoded?.email;
-      console.log("inside verify admin",email);
-      
       const query = { email: email };
       const user = await userCollection.findOne(query);
       const isDonor = user?.role === "donor";
@@ -241,7 +239,6 @@ async function run() {
     })
 
     app.patch('/blogs/:id', verifyToken,verifyAdmin, async (req, res) => {
-      console.log("inside patch blog",req.headers)
       const id = req.params.id;
       const data = req.body
       const status = req.body
