@@ -175,7 +175,7 @@ async function run() {
 
     // ************* donor related apis request *********
 
-    app.get('/donations', async(req, res) => {
+    app.get('/donations', verifyToken, async(req, res) => {
        // Extract donor email and limit from query parameters
       const donor = req.query?.donor; // Get the 'donor' parameter (email) from the query string
       const limit = req.query?.limit // Get the 'limit' parameter from the query string
@@ -196,13 +196,13 @@ async function run() {
             .toArray();
       res.send(donations)
     })
-    app.get('/donations/:id', async(req,res)=>{
+    app.get('/donations/:id', verifyToken, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result= await donorCollection.findOne(query);
       res.send(result)
     })
-    app.patch('/donations/:id', async(req, res) => {
+    app.patch('/donations/:id',  async(req, res) => {
       const id = req.params.id;
       const status = req.body;
       const filter = {_id: new ObjectId(id)};
@@ -215,7 +215,12 @@ async function run() {
       const result = await donorCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
-
+    app.delete('/donations/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await donorCollection.deleteOne(query);
+      res.send(result)
+    })
     app.post('/donations', async(req,res) => {
       const donation = req.body;
       const donationInfo ={
